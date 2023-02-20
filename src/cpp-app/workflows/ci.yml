@@ -18,7 +18,7 @@
 # Builds the App natively on the host environment,
 # executes all tests and lints all relevant source files.
 
-name: App - CI workflow
+name: CI workflow
 
 concurrency:
   group: app-ci-${{ github.ref }}
@@ -33,6 +33,7 @@ on:
   pull_request:
     branches:
       - main
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-22.04

@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Robert Bosch GmbH
+# Copyright (c) 2022 Robert Bosch GmbH and Microsoft Corporation
 #
 # This program and the accompanying materials are made available under the
 # terms of the Apache License, Version 2.0 which is available at
@@ -12,11 +12,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# _Summary_
-#
-# Builds an application container for a single target architecture.
-
-name: App - Build Docker Image for single arch
+name: Build Docker Image for single arch
 
 on:
   workflow_call:
@@ -27,6 +23,10 @@ on:
       deployment-matrix-str:
         required: true
         type: string
+      multiarch:
+        required: false
+        type: boolean
+        default: false
     outputs:
       imageid:
         value: ${{ jobs.build-image.outputs.imageid }}
@@ -56,9 +56,6 @@ jobs:
           repository: eclipse-velocitas/release-documentation-action
           path: "./.github/actions"
 
-      - name: Check Docker version
-        run: docker --version
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -66,13 +63,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
         with:
           version: v0.9.0
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: github-repository-name-case-adjusted
         name: Prepare repository name in lower case for docker upload. This supports repository names in mixed case
@@ -90,17 +80,32 @@ jobs:
           git config --global user.email "github-automation@users.noreply.github.com"
           git config --global user.name "Github Automation"
 
+      - name: Set Platform(s) String
+        id: set_platforms
+        run: |
+          if [ ${{ inputs.multiarch }} == true ]; then
+            echo "Build Multiarch"
+            echo "platforms=${{ appExecutionPlatforms }}" >> $GITHUB_OUTPUT
+          else
+            echo "Build ${{inputs.platform}}"
+            echo "platforms=linux/${{ inputs.platform }}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
       - name: "${{ matrix.component.Name }} -- Build image"
         id: image_build
         uses: docker/build-push-action@v3.2.0
         with:
-          pull: false
+          pull: true
           push: false
           outputs: |
             type=oci,dest=./${{ matrix.component.Name }}.tar
           file: ${{ matrix.component.Dockerfile }}
           context: .
-          platforms: linux/${{ inputs.platform }}
+          platforms: ${{ steps.set_platforms.outputs.platforms }}
+          secrets: |
+            "github_token=user:${{ secrets.GITHUB_TOKEN }}"
+          tags: ${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{steps.github-repository-name-case-adjusted.outputs.lowercase}}
 
@@ -108,12 +113,12 @@ jobs:
         run: |
           skopeo inspect --raw oci-archive:${{ matrix.component.Name }}.tar | jq
           skopeo inspect oci-archive:${{ matrix.component.Name }}.tar
-          skopeo copy oci-archive:${{ matrix.component.Name }}.tar docker-archive:${{ matrix.component.Name }}-${{ inputs.platform }}.tar
+          skopeo copy oci-archive:${{ matrix.component.Name }}.tar docker-archive:${{ matrix.component.Name }}-arch.tar
 
       - name: "${{ matrix.component.Name }} -- Scan docker image for vulnerabilities"
         uses: aquasecurity/trivy-action@0.8.0
         with:
-          input: ${{ matrix.component.Name }}-${{ inputs.platform }}.tar
+          input: ${{ matrix.component.Name }}-arch.tar
           exit-code: "0"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
@@ -136,7 +141,7 @@ jobs:
 
       - name: "${{ matrix.component.Name }} -- Upload trivy report as artifacts"
         if: ${{ always() && steps.image_build.outcome == 'success' }}
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3
         with:
           name: test-results
           path: |
@@ -153,10 +158,18 @@ jobs:
 
       - name: "${{ matrix.component.Name }} -- Upload image to artifacts"
         if: ${{ steps.image_build.outcome == 'success' }}
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3
         env:
           VAPP_IMAGE: ${{ matrix.component.Name }}-${{ inputs.platform }}
         with:
           name: ${{ env.VAPP_IMAGE }}
-          path: ./${{ matrix.component.Name }}-${{ inputs.platform }}.tar
+          path: ./${{ matrix.component.Name }}.tar
+          if-no-files-found: error
+
+      - name: "${{ matrix.component.Name }} -- Upload AppManifest.json to artifacts"
+        if: ${{ steps.image_build.outcome == 'success' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: AppManifest
+          path: ./app/AppManifest.json
           if-no-files-found: error
