@@ -43,7 +43,7 @@
                     "description": "The id of the repository, e.g. myOrg/myRepo."
                 },
                 {
-                    "name": "appContainerPlatforms",
+                    "name": "appExecutionPlatforms",
                     "type": "string",
                     "description": "Comma separated list of supported app container platforms.",
                     "default": "linux/amd64, linux/arm64"

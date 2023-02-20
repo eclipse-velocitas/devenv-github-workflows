@@ -85,7 +85,7 @@ jobs:
         run: |
           if [ ${{ inputs.multiarch }} == true ]; then
             echo "Build Multiarch"
-            echo "platforms=${{ appContainerPlatforms }}" >> $GITHUB_OUTPUT
+            echo "platforms=${{ appExecutionPlatforms }}" >> $GITHUB_OUTPUT
           else
             echo "Build ${{inputs.platform}}"
             echo "platforms=linux/${{ inputs.platform }}" >> $GITHUB_OUTPUT
