@@ -9,11 +9,15 @@
                     "dst": ".github"
                 },
                 {
-                    "src": "src/${{ language }}/common",
+                    "src": "src/${{ repoType }}",
                     "dst": ".github"
                 },
                 {
-                    "src": "src/${{ language }}/${{ repoType }}",
+                    "src": "src/${{ language }}-common",
+                    "dst": ".github"
+                },
+                {
+                    "src": "src/${{ language }}-${{ repoType }}",
                     "dst": ".github"
                 }
             ],
@@ -21,20 +25,28 @@
                 {
                     "name": "language",
                     "type": "string",
-                    "required": true,
                     "description": "The programming language of the project. Either 'python' or 'cpp'"
                 },
                 {
                     "name": "repoType",
                     "type": "string",
-                    "required": true,
                     "description": "The type of the repository: 'app' or 'sdk'"
                 },
                 {
                     "name": "appManifestPath",
                     "type": "string",
-                    "required": true,
                     "description": "Path of the AppManifest file, relative to the .velocitas.json"
+                },
+                {
+                    "name": "githubRepoId",
+                    "type": "string",
+                    "description": "The id of the repository, e.g. myOrg/myRepo."
+                },
+                {
+                    "name": "appExecutionPlatforms",
+                    "type": "string",
+                    "description": "Comma separated list of supported app execution platforms.",
+                    "default": "linux/amd64, linux/arm64"
                 }
             ]
         }

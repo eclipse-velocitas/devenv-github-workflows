@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Robert Bosch GmbH
+# Copyright (c) 2022 Robert Bosch GmbH and Microsoft Corporation
 #
 # This program and the accompanying materials are made available under the
 # terms of the Apache License, Version 2.0 which is available at
@@ -12,22 +12,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# _Summary_
-#
-# Builds the containerized App and pushes the image to the GHCR.
-
-name: App - Build App Container
-concurrency:
-  group: app-build-ci-${{ github.ref }}
-  cancel-in-progress: true
+name: Build multiarch image
 
 on:
   workflow_dispatch:
   push:
     # Run only on branches/commits and not tags
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -41,30 +31,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          submodules: "recursive"
 
       - name: Get matrix data
         id: export-deployment-matrix
         run: |
-          SITE_PACKAGES=$(python -m site --user-site)
-          sed -i "s|SITE_PACKAGES|$SITE_PACKAGES|g" ./app/AppManifest.json
           MATRIX=$(cat ./app/AppManifest.json | tr '\n' ' ')
 
           echo "deployment-matrix=$MATRIX" >> $GITHUB_OUTPUT
 
-  build-image-amd64:
-    uses: ./.github/workflows/build-docker-image-singlearch.yml
+  build-image-multiarch:
+    uses: ./.github/workflows/build-docker-image.yml
     needs: [initialize-matrix]
     with:
-      platform: amd64
+      platform: multiarch
+      multiarch: true
       deployment-matrix-str: ${{ needs.initialize-matrix.outputs.deployment-matrix }}
-    secrets: inherit
-
-  #  build-image-aarch64:
-  #    uses: ./.github/workflows/build-docker-image-singlearch.yml
-  #    needs: [initialize-matrix]
-  #    with:
-  #      platform: aarch64
-  #      deployment-matrix-str: ${{ needs.initialize-matrix.outputs.deployment-matrix }}
-  #    secrets: inherit
