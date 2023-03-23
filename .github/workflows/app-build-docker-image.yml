@@ -20,13 +20,22 @@ on:
       platform:
         required: true
         type: string
-      deployment-matrix-str:
+      language:
         required: true
         type: string
       multiarch:
         required: false
         type: boolean
         default: false
+      appExecutionPlatforms:
+        required: true
+        type: string
+      appName:
+        required: true
+        type: string
+      appDockerfilePath:
+        required: true
+        type: string
     outputs:
       imageid:
         value: ${{ jobs.build-image.outputs.imageid }}
@@ -35,12 +44,9 @@ on:
 
 jobs:
   build-image:
-    name: "Building image (${{ matrix.component.Name }})"
+    name: "Building image (${{ inputs.appName }})"
     runs-on: ubuntu-latest
-    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ language }}:latest
-    strategy:
-      matrix:
-        component: ${{ fromJson(inputs.deployment-matrix-str) }}
+    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ inputs.language }}:latest
     outputs:
       imageid: ${{ steps.image_build.outputs.imageid }}
       imagedigest: ${{ steps.image_build.outputs.imagedigest }}
@@ -90,22 +96,22 @@ jobs:
         run: |
           if [ ${{ inputs.multiarch }} == true ]; then
             echo "Build Multiarch"
-            echo "platforms=${{ appExecutionPlatforms }}" >> $GITHUB_OUTPUT
+            echo "platforms=${{ inputs.appExecutionPlatforms }}" >> $GITHUB_OUTPUT
           else
             echo "Build ${{inputs.platform}}"
             echo "platforms=linux/${{ inputs.platform }}" >> $GITHUB_OUTPUT
           fi
         shell: bash
 
-      - name: "${{ matrix.component.Name }} -- Build image"
+      - name: "${{ inputs.appName }} -- Build image"
         id: image_build
         uses: docker/build-push-action@v3.2.0
         with:
           pull: true
           push: false
           outputs: |
-            type=oci,dest=./${{ matrix.component.Name }}.tar
-          file: ${{ matrix.component.Dockerfile }}
+            type=oci,dest=./${{ inputs.appName }}.tar
+          file: ${{ inputs.appDockerfilePath }}
           context: .
           platforms: ${{ steps.set_platforms.outputs.platforms }}
           secrets: |
@@ -119,37 +125,43 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install skopeo
 
-      - name: "${{ matrix.component.Name }} -- Inspect tar image with skopeo"
+      - name: "${{ inputs.appName }} -- Inspect tar image with skopeo"
         run: |
-          skopeo inspect --raw oci-archive:${{ matrix.component.Name }}.tar | jq
-          skopeo inspect oci-archive:${{ matrix.component.Name }}.tar
-          skopeo copy oci-archive:${{ matrix.component.Name }}.tar docker-archive:${{ matrix.component.Name }}-arch.tar
+          skopeo inspect --raw oci-archive:${{ inputs.appName }}.tar | jq
+          skopeo inspect oci-archive:${{ inputs.appName }}.tar
+          skopeo copy oci-archive:${{ inputs.appName }}.tar docker-archive:${{ inputs.appName }}-arch.tar
 
-      - name: "${{ matrix.component.Name }} -- Scan docker image for vulnerabilities"
+      - name: Checkout Github Integration
+        uses: actions/checkout@v3
+        with:
+          repository: eclipse-velocitas/devenv-github-workflows
+          path: ./.github/devenv-github-workflows
+
+      - name: "${{ inputs.appName }} -- Scan docker image for vulnerabilities"
         uses: aquasecurity/trivy-action@0.8.0
         with:
-          input: ${{ matrix.component.Name }}-arch.tar
+          input: ${{ inputs.appName }}-arch.tar
           exit-code: "0"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
           format: "template"
-          template: "@.github/scripts/junit.tpl"
+          template: .github/devenv-github-workflows/templates/junit.tpl
           output: "junit.xml"
 
-      - name: "${{ matrix.component.Name }} -- Show scan results"
+      - name: "${{ inputs.appName }} -- Show scan results"
         if: ${{ always() }}
         run: cat ./junit.xml
 
-      - name: "${{ matrix.component.Name }} -- Package vulnerability scan files"
+      - name: "${{ inputs.appName }} -- Package vulnerability scan files"
         uses: ./.github/actions/package
         with:
-          name: "VulnerabilityScan-${{ matrix.component.Name }}"
+          name: "VulnerabilityScan-${{ inputs.appName }}"
           type: "VulnerabilityScan"
           schema: "JUnit"
           sourcePath: ./junit.xml
           packagePath: results/Documentation/renderer
 
-      - name: "${{ matrix.component.Name }} -- Upload trivy report as artifacts"
+      - name: "${{ inputs.appName }} -- Upload trivy report as artifacts"
         if: ${{ always() && steps.image_build.outcome == 'success' }}
         uses: actions/upload-artifact@v3
         with:
@@ -157,26 +169,26 @@ jobs:
           path: |
             results/Documentation/renderer/*
 
-      - name: "${{ matrix.component.Name }} -- Publish Trivy Scan Results"
+      - name: "${{ inputs.appName }} -- Publish Trivy Scan Results"
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: ${{ always() && steps.image_build.outcome == 'success' }}
         with:
-          check_name: Trivy Scan Results (${{ matrix.component.Name }})
-          comment_title: Trivy Scan Results (${{ matrix.component.Name }})
+          check_name: Trivy Scan Results (${{ inputs.appName }})
+          comment_title: Trivy Scan Results (${{ inputs.appName }})
           fail_on: "errors"
           junit_files: ./junit.xml
 
-      - name: "${{ matrix.component.Name }} -- Upload image to artifacts"
+      - name: "${{ inputs.appName }} -- Upload image to artifacts"
         if: ${{ steps.image_build.outcome == 'success' }}
         uses: actions/upload-artifact@v3
         env:
-          VAPP_IMAGE: ${{ matrix.component.Name }}-${{ inputs.platform }}
+          VAPP_IMAGE: ${{ inputs.appName }}-${{ inputs.platform }}
         with:
           name: ${{ env.VAPP_IMAGE }}
-          path: ./${{ matrix.component.Name }}.tar
+          path: ./${{ inputs.appName }}.tar
           if-no-files-found: error
 
-      - name: "${{ matrix.component.Name }} -- Upload AppManifest.json to artifacts"
+      - name: "${{ inputs.appName }} -- Upload AppManifest.json to artifacts"
         if: ${{ steps.image_build.outcome == 'success' }}
         uses: actions/upload-artifact@v3
         with:

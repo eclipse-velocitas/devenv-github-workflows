@@ -5,19 +5,19 @@
             "type": "setup",
             "files": [
                 {
-                    "src": "src/common",
+                    "src": "sync/common",
                     "dst": ".github"
                 },
                 {
-                    "src": "src/${{ repoType }}",
+                    "src": "sync/${{ repoType }}",
                     "dst": ".github"
                 },
                 {
-                    "src": "src/${{ language }}-common",
+                    "src": "sync/${{ language }}-common",
                     "dst": ".github"
                 },
                 {
-                    "src": "src/${{ language }}-${{ repoType }}",
+                    "src": "sync/${{ language }}-${{ repoType }}",
                     "dst": ".github"
                 }
             ],
