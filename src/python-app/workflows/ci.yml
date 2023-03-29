@@ -48,10 +48,10 @@ jobs:
 
       - name: Install required packages
         run: |
-          pip install -r requirements-dev.txt
+          pip install -r requirements.txt
           pip install -r app/requirements-links.txt
           pip install -r app/requirements.txt
-          pip install -r app/tests/requirements-tests.txt
+          pip install -r app/tests/requirements.txt
 
       - name: Fix dubious ownership
         run: |
@@ -181,7 +181,7 @@ jobs:
         run: |
           pip install -r ./app/requirements.txt
           pip install -r ./app/requirements-links.txt
-          pip install -r ./app/tests/requirements-tests.txt
+          pip install -r ./app/tests/requirements.txt
 
       - name: Configure K3D cluster
         run: velocitas exec runtime-k3d configure_controlplane
@@ -213,7 +213,7 @@ jobs:
           VDB_PORT: 30555
           MQTT_PORT: 31883
         run: |
-          pip install -r app/tests/requirements-tests.txt
+          pip install -r app/tests/requirements.txt
           pytest ./app/tests/integration --override-ini junit_family=xunit1 --junit-xml=./results/IntTest/junit.xml
 
       - name: Publish integration test results
