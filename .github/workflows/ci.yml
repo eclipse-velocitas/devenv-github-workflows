@@ -1,0 +1,118 @@
+# Copyright (c) 2023 Robert Bosch GmbH
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    # Run only on branches/commits and not tags
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-integration-tests:
+    name: Run Integration Test
+    runs-on: ubuntu-22.04
+    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ matrix.language }}:latest
+    strategy:
+      matrix:
+        language: ["python", "cpp"]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Checkout template repo
+        uses: actions/checkout@v3
+        with:
+          repository: eclipse-velocitas/vehicle-app-${{ matrix.language }}-template
+          path: test/${{ matrix.language }}/repo
+
+      - name: Prepare .velocitas.json for integration test
+        run: |
+          NEW_CONFIG="$(jq --arg GITHUB_SHA "$GITHUB_SHA" '.packages[0].version |= $GITHUB_SHA' test/${{ matrix.language }}/.velocitas.json)"
+          echo "${NEW_CONFIG}" > test/${{ matrix.language }}/repo/.velocitas.json
+
+      - name: Init velocitas project
+        run: |
+          cd test/${{ matrix.language }}/repo
+          velocitas init
+
+      - name: Sync velocitas project
+        run: |
+          cd test/${{ matrix.language }}/repo
+          velocitas sync
+
+      - name: Reset .velocitas.json to latest template state
+        run: |
+          cd test/${{ matrix.language }}/repo
+          git checkout .velocitas.json
+
+      - name: Fix dubious ownership
+        run: |
+          git config --global --add safe.directory $( pwd )
+
+      - name: Identify changes in devenv repo
+        uses: dorny/paths-filter@v2
+        id: changesInPath
+        with:
+          filters: |
+            workflowsApp:
+              - 'src/app/**'
+            workflowsCommon:
+              - 'src/common/**'
+            workflowsLangCommon:
+              - 'src/${{ matrix.language }}-common/**'
+            workflowsLangApp:
+              - 'src/${{ matrix.language }}-app/**'
+            workflowsLangSdk:
+              - 'src/${{ matrix.language }}-sdk/**'
+
+      - name: Check if cloned template repo has changes after sync
+        if: |
+          (steps.changesInPath.outputs.workflowsApp == 'true' || 
+          steps.changesInPath.outputs.workflowsCommon == 'true' || 
+          steps.changesInPath.outputs.workflowsLangCommon == 'true' || 
+          steps.changesInPath.outputs.workflowsLangApp == 'true' || 
+          steps.changesInPath.outputs.workflowsLangSdk == 'true')
+        id: changes
+        run: |
+          cd test/${{ matrix.language }}/repo
+          git diff
+          if [[ -z "$(git status --porcelain .)" ]];
+          then
+            echo "No Changes"
+            echo "changed=0" >> $GITHUB_OUTPUT
+          else
+            echo "Changes"
+            echo "changed=1" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Fail if there are changes in setup files detected but sync probably failed
+        if: |
+          (steps.changes.outputs.changed == 0 && steps.changesInPath.outputs.workflowsApp == 'true') ||
+          (steps.changes.outputs.changed == 0 && steps.changesInPath.outputs.workflowsCommon == 'true') ||
+          (steps.changes.outputs.changed == 0 && steps.changesInPath.outputs.workflowsLangCommon == 'true') ||
+          (steps.changes.outputs.changed == 0 && steps.changesInPath.outputs.workflowsLangApp == 'true') ||
+          (steps.changes.outputs.changed == 0 && steps.changesInPath.outputs.workflowsLangSdk == 'true')
+        run: exit 1
