@@ -89,10 +89,10 @@ jobs:
 
       - name: Check if cloned template repo has changes after sync
         if: |
-          (steps.changesInPath.outputs.workflowsApp == 'true' || 
-          steps.changesInPath.outputs.workflowsCommon == 'true' || 
-          steps.changesInPath.outputs.workflowsLangCommon == 'true' || 
-          steps.changesInPath.outputs.workflowsLangApp == 'true' || 
+          (steps.changesInPath.outputs.workflowsApp == 'true' ||
+          steps.changesInPath.outputs.workflowsCommon == 'true' ||
+          steps.changesInPath.outputs.workflowsLangCommon == 'true' ||
+          steps.changesInPath.outputs.workflowsLangApp == 'true' ||
           steps.changesInPath.outputs.workflowsLangSdk == 'true')
         id: changes
         run: |
