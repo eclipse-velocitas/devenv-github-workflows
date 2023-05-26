@@ -97,7 +97,8 @@ jobs:
 
       - name: zip HelmChart
         run: |
-          zip -r ${{github.workspace}}/HelmChart.zip ${{github.workspace}}/HelmChart
+          cd ${{github.workspace}}/HelmChart
+          zip -r ${{github.workspace}}/HelmChart.zip .
 
       - name: ${{ matrix.component.name }} -- Upload assets
         uses: softprops/action-gh-release@v1
