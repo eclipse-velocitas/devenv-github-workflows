@@ -136,12 +136,13 @@ jobs:
           if_false: ${{ github.sha }}
 
       - name: Wait for CI workflow to succeed
-        uses: fountainhead/action-wait-for-check@v1.1.0
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
-          checkName: Run Integration Tests (${{ matrix.component.name }})
-          token: ${{ secrets.GITHUB_TOKEN }}
-          timeoutSeconds: 600
-          intervalSeconds: 10
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.repository }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_file_name: ci.yml
+          ref: ${{github.ref}}
 
       - name: Download artifact from CI workflow
         uses: dawidd6/action-download-artifact@v2
