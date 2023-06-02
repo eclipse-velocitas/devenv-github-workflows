@@ -30,7 +30,7 @@ on:
 
 jobs:
   build-and-publish:
-    runs-on: ghcr.io/eclipse-velocitas/devcontainer-base-images/python:v0.1.1
+    runs-on: ghcr.io/eclipse-velocitas/devcontainer-base-images/python:v0.1.2
     name: Run Linters, Unit Tests and sdist
     strategy:
       max-parallel: 3
