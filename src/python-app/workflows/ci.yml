@@ -266,3 +266,4 @@ jobs:
           uses: devcontainers/ci@v0.3
           with:
             runCmd: velocitas upgrade --dry-run
+            push: never
