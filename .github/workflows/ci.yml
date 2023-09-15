@@ -48,16 +48,10 @@ jobs:
           path: test/${{ matrix.language }}/repo
 
       - name: Prepare .velocitas.json for integration test
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          COMMIT_REF=$GITHUB_SHA
-
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ];
-          then
-            echo "Running in context of a PR!"
-            COMMIT_REF=$GITHUB_HEAD_REF
-          fi
-
-          NEW_CONFIG="$(jq --arg COMMIT_REF "$COMMIT_REF" '.packages[0].version |= $COMMIT_REF' test/${{ matrix.language }}/.velocitas.json)"
+          NEW_CONFIG="$(jq --arg BRANCH "$BRANCH_NAME" '.packages[0].version |= $BRANCH' test/${{ matrix.language }}/.velocitas.json)"
           echo "${NEW_CONFIG}" > test/${{ matrix.language }}/repo/.velocitas.json
 
       - name: Init velocitas project
