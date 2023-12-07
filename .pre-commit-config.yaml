@@ -16,27 +16,27 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v3.2.0
-      hooks:
-          - id: trailing-whitespace
-          - id: end-of-file-fixer
-          - id: check-yaml
-          - id: check-added-large-files
-          - id: check-json
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-json
 
-    - repo: https://github.com/Lucas-C/pre-commit-hooks
-      rev: v1.5.4
-      hooks:
-          - id: forbid-crlf
-          - id: remove-crlf
-          - id: insert-license
-            files: '.*\.(py|pyi|yaml|yml|sh|helmignore|dockerignore|gitignore)$'
-            args:
-                - --license-filepath
-                - license_header.txt
-                - --comment-style
-                - "#"
-                - --use-current-year
-                - --allow-past-years
-                - --skip-license-insertion-comment=This file is maintained by velocitas CLI, do not modify manually.
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: forbid-crlf
+      - id: remove-crlf
+      - id: insert-license
+        files: '.*\.(py|pyi|yaml|yml|sh)$'
+        args:
+          - --license-filepath
+          - license_header.txt
+          - --comment-style
+          - "#"
+          - --use-current-year
+          - --allow-past-years
+          - --skip-license-insertion-comment=This file is maintained by velocitas CLI, do not modify manually.
