@@ -41,17 +41,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup python for linters
-        uses: actions/setup-python@v5
-
-      - name: Prepare for linters
-        run: |
-          pwd
-          ls -al
-
-      - name: Run linters
-        uses: pre-commit/action@v3.0.0
-
       - name: Checkout template repo
         uses: actions/checkout@v4
         with:
