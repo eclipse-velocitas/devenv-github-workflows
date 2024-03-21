@@ -30,7 +30,7 @@ on:
 
 jobs:
   build-and-publish:
-    runs-on: ghcr.io/eclipse-velocitas/devcontainer-base-images/python:v0.2
+    runs-on: ghcr.io/eclipse-velocitas/devcontainer-base-images/python:v0.3
     name: Run Linters, Unit Tests and sdist
     strategy:
       max-parallel: 3
@@ -63,10 +63,10 @@ jobs:
       - name: Run Linters
         uses: pre-commit/action@v3.0.0
 
-      - name: Run the daparized databroker binary
+      - name: Run the databroker binary
         run: |
           velocitas exec runtime-local run-mosquitto --task &
-          velocitas exec runtime-local run-vehicledatabroker DAPR --task &
+          velocitas exec runtime-local run-vehicledatabroker --task &
           sleep 10s
 
       - name: Run unit and integration tests
