@@ -1,15 +1,14 @@
 {
-    "packages": [
-        {
-            "name": "devenv-github-workflows",
-            "version": "hash_id"
-        }
-    ],
+    "packages": {
+        "devenv-devcontainer-setup": "hash_id"
+    },
     "variables": {
-        "appManifestPath": "app/AppManifest.json",
         "language": "cpp",
         "repoType": "app",
+        "appManifestPath": "app/AppManifest.json",
         "githubRepoId": "eclipse-velocitas/vehicle-app-cpp-template",
-        "appExecutionPlatforms": "linux/amd64"
-    }
+        "appExecutionPlatforms": "linux/amd64",
+        "generatedModelPath": "./app/vehicle_model"
+    },
+    "cliVersion": "v0.9.0"
 }
