@@ -15,11 +15,11 @@
 name: update-velocitas-json
 description: Update the project's velocitas JSON.
 inputs:
-  project_path:
-    description: Path to the directory containing the Velocitas project
+  project_dir:
+    description: Directory containing the Velocitas project
     required: true
-  template_path:
-    description: Path to a JSON file which will replace the .velocitas.json file.
+  template_file:
+    description: JSON file which will replace the .velocitas.json file.
     default: None
 runs:
   using: composite
@@ -30,10 +30,10 @@ runs:
         BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         BRANCH_NAME_PREFIX: "@"
       run: |
-        if [ "${{ inputs.template_path }}" != "None" ]; then
+        if [ "${{ inputs.template_file }}" != "None" ]; then
           echo "Copying template file..."
-          cp -f ${{ inputs.template_path }} ${{ inputs.project_path }}/.velocitas.json
+          cp -f ${{ inputs.template_file }} ${{ inputs.project_dir }}/.velocitas.json
         fi
 
-        NEW_CONFIG="$(jq --arg BRANCH "$BRANCH_NAME_PREFIX$BRANCH_NAME" '.packages |= . + { (. | keys_unsorted[0]): $BRANCH }'  ${{ inputs.project_path }}/.velocitas.json)"
-        echo "${NEW_CONFIG}" > ${{ inputs.project_path }}/.velocitas.json
+        NEW_CONFIG="$(jq --arg BRANCH "$BRANCH_NAME_PREFIX$BRANCH_NAME" '.packages |= . + { (. | keys_unsorted[0]): $BRANCH }'  ${{ inputs.project_dir }}/.velocitas.json)"
+        echo "${NEW_CONFIG}" > ${{ inputs.project_dir }}/.velocitas.json

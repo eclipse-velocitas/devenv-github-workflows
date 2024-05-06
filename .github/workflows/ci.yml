@@ -50,8 +50,8 @@ jobs:
       - name: Update Velocitas JSON with correct version
         uses: ./.github/actions/update-velocitas-json
         with:
-          project_path: test/${{ matrix.language }}/repo
-          template_path: test/${{ matrix.language }}/.velocitas.json
+          project_dir: test/${{ matrix.language }}/repo
+          template_file: test/${{ matrix.language }}/.velocitas.json
 
       - name: Init velocitas project
         run: |
