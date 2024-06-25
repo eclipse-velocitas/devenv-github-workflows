@@ -42,10 +42,11 @@ jobs:
           velocitas init -v
 
       - name: Extract version from tag
+        id: get_version
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo Version: $VERSION
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version-without-v=$VERSION" >> $GITHUB_OUTPUT
 
       - id: github-repository-name-case-adjusted
         name: Prepare repository name in lower case for docker upload.
@@ -56,7 +57,7 @@ jobs:
       - name: "Generate desired state for ${{ inputs.app_name }}"
         working-directory: ${{github.workspace}}
         env:
-          VAPP_VERSION: ${{ env.VERSION }}
+          VAPP_VERSION: ${{ steps.get_version.outputs.version-without-v }}
           REGISTRY: "ghcr.io/${{steps.github-repository-name-case-adjusted.outputs.lowercase}}"
         run: |
           velocitas exec pantaris-integration generate-desired-state -s $(echo $REGISTRY/${{ inputs.app_name }}:$VAPP_VERSION | tr '[:upper:]' '[:lower:]')
