@@ -30,12 +30,6 @@ jobs:
             git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
             if [ -n "$(git status --porcelain)" ]; then
-              git add .
-              git commit -m "Update velocitas package versions"
-
-              BRANCH_NAME="automated-update-${{ github.sha }}"
-              git push origin HEAD:$BRANCH_NAME
-
               PR_TITLE="Automated Package Update"
               PR_BODY="This pull request was created automatically by GitHub Actions to update package versions."
 
@@ -46,6 +40,11 @@ jobs:
                 echo "Existing PR found (#${PR_EXISTING}). Closing..."
                 gh pr close "$PR_EXISTING" -d
               fi
+                git add .
+                git commit -m "Update velocitas package versions"
+
+                BRANCH_NAME="automated-update-${{ github.sha }}"
+                git push origin HEAD:$BRANCH_NAME
                 echo "Creating new PR..."
                 gh pr create --title "$PR_TITLE" --body "$PR_BODY" --head $BRANCH_NAME --base main
             else
