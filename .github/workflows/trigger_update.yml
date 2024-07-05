@@ -1,0 +1,25 @@
+name: Trigger Velocitas Update Workflow
+
+on:
+  release:
+    types: [published]
+
+env:
+  CHECK_UPDATES_FILE: check-updates.yml
+
+jobs:
+  trigger:
+    strategy:
+      matrix:
+        # repo: ["vehicle-app-python-template", "vehicle-app-cpp-template", "vehicle-app-cpp-sdk"]
+        # Start with python template
+        repo: ["vehicle-app-python-template"]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger check updates workflow in template repo
+        run: |
+          echo "${{ secrets.VELOCITAS_PROJECT_TOKEN }}" | gh auth login --with-token
+          gh workflow run $CHECK_UPDATES_FILE -R eclipse-velocitas/${{ matrix.repo }}
