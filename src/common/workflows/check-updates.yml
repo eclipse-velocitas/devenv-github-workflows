@@ -51,16 +51,24 @@ jobs:
               PR_EXISTING=$(gh pr list --state open --search "$PR_TITLE" --json number | jq -r '.[0].number // empty')
 
               if [ -n "$PR_EXISTING" ]; then
-                echo "Existing PR found (#${PR_EXISTING}). Closing..."
-                gh pr close "$PR_EXISTING" -d
-              fi
+                echo "Existing PR found (#${PR_EXISTING}). Editing..."
+                git checkout .
+                gh pr checkout "$PR_EXISTING"
+                velocitas upgrade --ignore-bounds && velocitas init && velocitas sync
                 git add .
                 git commit -m "Update velocitas package versions"
-
+                if [ $? -eq 0 ]; then
+                    git push
+                    gh pr comment "$PR_EXISTING" --body "Updated PR with latest package updates"
+                fi
+              else
+                git add .
+                git commit -m "Update velocitas package versions"
                 BRANCH_NAME="automated-update-${{ github.sha }}"
                 git push origin HEAD:$BRANCH_NAME
                 echo "Creating new PR..."
                 gh pr create --title "$PR_TITLE" --body "$PR_BODY" --head $BRANCH_NAME --base main
+              fi
             else
               echo "No changes detected. Skip creating Pull Request."
             fi
