@@ -34,9 +34,8 @@ jobs:
     name: Check Conan package
     strategy:
       matrix:
-        host: ["linux_x86_64"]
+        host: ["linux-x86_64"]
       fail-fast: false
-
 
     steps:
       - name: Checkout repository
@@ -53,7 +52,7 @@ jobs:
 
       - name: Create conan package
         run: |
-          conan create --build=missing -pr:b ./.conan/profiles/linux_x86_64_release -pr:h ./.conan/profiles/${{ matrix.host }}_release . ci/testing
+          conan create --build=missing -pr:b ./.conan/profiles/linux-x86_64 -pr:h ./.conan/profiles/${{ matrix.host }} -s:a="build_type=Release" . --user ci --channel testing
 
   build-and-publish:
     runs-on: ubuntu-22.04
@@ -83,7 +82,9 @@ jobs:
         run: build/bin/sdk_utests
 
       - name: Generate coverage report
-        run: cd build && gcovr -r ..
+        # If 'build' folder is a symlink, assigning pwd to ROOT_DIR makes this independent
+        # of the number of dirs covered by the symlink
+        run: ROOT_DIR=$(pwd) && cd build && gcovr -r $ROOT_DIR
 
       - name: Code Coverage Summary Report
         uses: irongut/CodeCoverageSummary@v1.3.0
