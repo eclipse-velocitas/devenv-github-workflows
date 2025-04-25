@@ -28,7 +28,7 @@ on:
 jobs:
   check-sync:
     runs-on: ubuntu-22.04
-    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ language }}:v0.3
+    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ language }}:5cb71f75c9dbf10151d18f16867717cc1c79554d
     name: Are files in sync?
 
     steps:
