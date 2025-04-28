@@ -31,7 +31,7 @@ jobs:
   run-integration-tests:
     name: Run Integration Test
     runs-on: ubuntu-22.04
-    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ matrix.language }}:5cb71f75c9dbf10151d18f16867717cc1c79554d
+    container: ghcr.io/eclipse-velocitas/devcontainer-base-images/${{ matrix.language }}:v0.4
     strategy:
       matrix:
         language: ["python", "cpp"]
